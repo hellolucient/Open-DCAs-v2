@@ -70,10 +70,4 @@ export type Position = {
   remainingAmount: number;
   estimatedTokens: number;
   remainingInCycle: number;  // Amount remaining in current cycle
-  cycleProgress?: {
-    total: number;
-    used: number;
-    remaining: number;
-    percentComplete: number;
-  };
 }; 

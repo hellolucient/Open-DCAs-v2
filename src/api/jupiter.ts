@@ -246,39 +246,6 @@ class JupiterDCAAPI {
       }
     });
 
-    const txHash = await this.getRecentTransactionForAccount(account.publicKey.toString());
-    const response = await fetch(
-      `${import.meta.env.VITE_HELIUS_RPC_URL}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 'my-id',
-        method: 'getTransaction',
-        params: [
-          txHash,
-          { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0 }
-        ],
-      }),
-    });
-    const txDetails = await response.json();
-    
-    const amounts = this.parseTransactionAmounts(txDetails);
-    
-    console.log('=== CHAOS BUY ORDER DETAILS ===');
-    console.log('Account:', account.publicKey.toString());
-    console.log('Transaction Amounts:', amounts);
-    console.log('Cycle Progress:', {
-      cycleAmount: account.account.inAmountPerCycle.toNumber() / Math.pow(10, 6),
-      currentCycleUsed: amounts?.usdcPaid || 0,
-      remainingInCycle: (account.account.inAmountPerCycle.toNumber() / Math.pow(10, 6)) - (amounts?.usdcPaid || 0)
-    });
-    console.log('=== END CHAOS BUY ORDER ===');
-
-    // Add cycle progress to the position
-    const cycleAmount = account.account.inAmountPerCycle.toNumber() / Math.pow(10, 6);
-    const cycleUsed = amounts?.usdcPaid || 0;
-    
     return {
       id: account.publicKey.toString(),
       token,
@@ -310,12 +277,6 @@ class JupiterDCAAPI {
           : remainingValue / price
         : remainingValue * ((account.account.minOutAmount ? account.account.minOutAmount.toNumber() / Math.pow(10, 6) : price)),
       remainingInCycle,
-      cycleProgress: {
-        total: cycleAmount,
-        used: cycleUsed,
-        remaining: cycleAmount - cycleUsed,
-        percentComplete: (cycleUsed / cycleAmount) * 100
-      }
     };
   }
 
@@ -623,56 +584,6 @@ class JupiterDCAAPI {
     const txDetails = await Promise.all(txPromises);
     return txDetails;
   }
-
-  private parseTransactionAmounts(tx: any) {
-    try {
-      // Look for token transfers in innerInstructions
-      const transfers = tx.result.meta.innerInstructions
-        .flatMap((inner: any) => inner.instructions)
-        .filter((inst: any) => inst.parsed?.type === 'transfer');
-
-      // Find CHAOS received (largest transfer)
-      const chaosAmount = Math.max(...transfers
-        .map((t: any) => Number(t.parsed.info.amount)));
-
-      // Find USDC paid (usually last transfer)
-      const usdcAmount = transfers
-        .find((t: any) => t.parsed.info.destination === '6zAcFYmxkaH25qWZW5ek4dk4SyQNpSza3ydSoUxjTudD')
-        ?.parsed.info.amount;
-
-      return {
-        chaosReceived: chaosAmount / Math.pow(10, 9),  // CHAOS decimals
-        usdcPaid: Number(usdcAmount) / Math.pow(10, 6) // USDC decimals
-      };
-    } catch (error) {
-      console.error('Error parsing transaction:', error);
-      return null;
-    }
-  }
-
-  private async getRecentTransactionForAccount(accountKey: string): Promise<string> {
-    // Get recent signatures
-    const sigResponse = await fetch(
-      `${import.meta.env.VITE_HELIUS_RPC_URL}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 'my-id',
-        method: 'getSignaturesForAddress',
-        params: [
-          accountKey,
-          { limit: 1 }  // Just get most recent transaction
-        ],
-      }),
-    });
-    const sigData = await sigResponse.json();
-
-    // Return the most recent transaction signature
-    return sigData.result?.[0]?.signature || '';
-  }
-
-  // ... rest of the code
 }
 
 export const jupiterDCA = new JupiterDCAAPI(); 

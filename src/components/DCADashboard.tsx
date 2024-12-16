@@ -73,10 +73,8 @@ function PositionCard({
   position: Position;
   currentPrice: number;
 }) {
-  // Get the remaining amount from cycleProgress if available
-  const remainingThisCycle = position.cycleProgress 
-    ? position.cycleProgress.remaining
-    : position.remainingInCycle;
+  // Remove cycleProgress reference
+  const remainingThisCycle = position.remainingInCycle;
 
   return (
     <div className={`bg-[#2a2a2a] p-2 sm:p-4 rounded-lg border-l-4 ${
@@ -95,22 +93,6 @@ function PositionCard({
         <div>Split into: {position.totalCycles} orders ({Math.floor(position.totalCycles - position.completedCycles)} remaining)</div>
         <div>Order Size: ${Math.round(position.amountPerCycle)} per cycle (${Math.round(remainingThisCycle)} remaining this cycle)</div>
         <div>Frequency: Every {position.cycleFrequency}s</div>
-        
-        {/* Add cycle progress bar */}
-        {position.cycleProgress && (
-          <div className="mt-2 pt-2 border-t border-gray-700">
-            <div className="text-sm text-gray-400">Current Cycle Progress</div>
-            <div className="w-full bg-gray-700 rounded-full h-2.5 mt-1">
-              <div 
-                className="bg-blue-600 h-2.5 rounded-full transition-all duration-500" 
-                style={{ width: `${position.cycleProgress.percentComplete}%` }}
-              />
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              {position.cycleProgress.used.toFixed(2)} / {position.cycleProgress.total.toFixed(2)} USDC
-            </div>
-          </div>
-        )}
         
         <div className="mt-2 pt-2 border-t border-gray-700">
           <div>Status: {position.isActive ? '🚥 Active' : '⚪️ Completed'}</div>
