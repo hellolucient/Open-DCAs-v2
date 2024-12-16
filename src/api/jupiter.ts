@@ -50,7 +50,7 @@ class JupiterDCAAPI {
       this.dca = new DCA(this.connection, Network.MAINNET);
     } catch (error) {
       console.error('Failed to initialize DCA:', error);
-      // Try to reconnect
+      // Try to reconnect using Helius
       await new Promise(resolve => setTimeout(resolve, 1000));
       this.connection = new Connection(import.meta.env.VITE_HELIUS_RPC_URL);
       this.initDCA();
